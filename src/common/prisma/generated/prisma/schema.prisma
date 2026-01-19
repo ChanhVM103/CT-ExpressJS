@@ -1,0 +1,59 @@
+generator client {
+  provider     = "prisma-client-js"
+  output       = "../src/common/prisma/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model comments {
+  commentID    Int       @id @default(autoincrement())
+  userID       Int?
+  imageID      Int?
+  comment_date DateTime? @default(now()) @db.DateTime(0)
+  content      String?   @db.Text
+  users        users?    @relation(fields: [userID], references: [userID], onDelete: Cascade, onUpdate: NoAction, map: "comments_ibfk_1")
+  images       images?   @relation(fields: [imageID], references: [imageID], onDelete: Cascade, onUpdate: NoAction, map: "comments_ibfk_2")
+
+  @@index([imageID], map: "imageID")
+  @@index([userID], map: "userID")
+}
+
+model images {
+  imageID      Int            @id @default(autoincrement())
+  imageName    String         @db.VarChar(255)
+  path         String         @db.VarChar(255)
+  description  String?        @db.Text
+  userID       Int?
+  isDeleted    Boolean?       @default(false)
+  comments     comments[]
+  users        users?         @relation(fields: [userID], references: [userID], onDelete: Cascade, onUpdate: NoAction, map: "images_ibfk_1")
+  saved_images saved_images[]
+
+  @@index([userID], map: "userID")
+}
+
+model saved_images {
+  userID   Int
+  imageID  Int
+  saveDate DateTime? @default(now()) @db.DateTime(0)
+  users    users     @relation(fields: [userID], references: [userID], onDelete: Cascade, onUpdate: NoAction, map: "saved_images_ibfk_1")
+  images   images    @relation(fields: [imageID], references: [imageID], onDelete: Cascade, onUpdate: NoAction, map: "saved_images_ibfk_2")
+
+  @@id([userID, imageID])
+  @@index([imageID], map: "imageID")
+}
+
+model users {
+  userID       Int            @id @default(autoincrement())
+  email        String         @unique(map: "email") @db.VarChar(100)
+  password     String         @db.VarChar(255)
+  fullname     String?        @db.VarChar(100)
+  age          Int?
+  avatar       String?        @db.VarChar(255)
+  comments     comments[]
+  images       images[]
+  saved_images saved_images[]
+}
